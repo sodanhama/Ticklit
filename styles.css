@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&family=Lexend:wght@100..900&display=swap');
+
+body {
+    background-color: #0a0908;
+    color: #f2f4f3;
+    font-family: 'Lexend', sans-serif;
+}
+
+header {
+    text-align: center;
+    font-family: 'Geist', sans-serif;
+}
