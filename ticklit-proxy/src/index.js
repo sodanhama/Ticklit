@@ -13,23 +13,20 @@ export default {
 		const url = new URL(request.url);
 		const symbol = url.searchParams.get("symbol");
 		const endpoint = url.searchParams.get("endpoint") || "quote";
+		const source = url.searchParams.get("source");
 
 		if (!symbol) {
 			return jsonError("Missing symbol param", 400);
 		}
 
+		if (source === "chart") {
+			return await handleStooq(symbol);
+		}
+
 		const allowedEndpoints = ["quote", "profile2", "metric"];
 
 		if (!allowedEndpoints.includes(endpoint)) {
-			return new Response(JSON.stringify({
-				error: "Invalid endpoint"
-			}), {
-				status: 400,
-				headers: {
-					"Content-Type": "application/json",
-					"Access-Control-Allow-Origin": "*"
-				}
-			})
+			return jsonError("Invalid endpoint", 400);
 		}
 		
 		let finnhubUrl = `https://finnhub.io/api/v1/${endpoint}?symbol=${symbol}&token=${env.FINNHUB_API_KEY}`;
@@ -53,8 +50,34 @@ export default {
 			return jsonError("Upstream fetch failed", 502);
 		}
 	},
-
-	async function handleStooq(symbol) {
-		return;
-	}
 };
+
+async function handleStooq(symbol) {
+	const stooqSymbol = `${symbol.toLowerCase()}.us`;
+	const stooqUrl = `https://stooq.com/q/d/l/?s=${stooqSymbol}&i=d`;
+
+  try {
+    const response = await fetch(stooqUrl);
+    const csvText = await response.text();
+
+    // TEMP: just return exactly what Stooq sent, no parsing
+    return new Response(csvText, {
+      headers: {
+        "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err) {
+    return jsonError("Stooq fetch failed", 502);
+  }
+}
+
+function jsonError(message, status) {
+	return new Response(JSON.stringify({ error: message }), {
+		status,
+		headers: {
+			"Content-Type": "application/json",
+			"Access-Control-Allow-Origin": "*"
+		}
+	})
+}
