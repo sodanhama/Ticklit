@@ -35,22 +35,29 @@ export default {
 		if (endpoint === "metric") {
 			finnhubUrl += "&metric=all";
 		}
-	
-		try {
-			const response = await fetch(finnhubUrl);
-			const data = await response.json();
+	const hasKey = !!env.FINNHUB_API_KEY;
+const keyLength = env.FINNHUB_API_KEY ? env.FINNHUB_API_KEY.length : 0;
 
-			return new Response(JSON.stringify(data), {
-				headers: {
-					"Content-Type": "application/json",
-					"Access-Control-Allow-Origin": "*",
-					"Cache-Control": "public, max-age=60"
-				}
-			})
-			
-		} catch (err) {
-			return jsonError("Upstream fetch failed", 502);
-		}
+return new Response(JSON.stringify({
+  urlUsed: finnhubUrl.replace(env.FINNHUB_API_KEY || "undefined", "REDACTED"),
+  hasKey,
+  keyLength
+}), {
+  headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+});
+try {
+  const response = await fetch(finnhubUrl);
+  const rawText = await response.text();
+
+  return new Response(JSON.stringify({ status: response.status, body: rawText }), {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
+} catch (err) {
+  return jsonError(`Upstream fetch failed: ${err.message}`, 502);
+}
 	},
 
 	async scheduled(event, env, ctx) {
@@ -77,28 +84,27 @@ async function getChartFromKV(symbol, env) {
 }
 
 async function refreshChartCache(symbol, env, returnResponse = false) {
-	const avUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&outputsize=compact&apikey=${env.ALPHA_VANTAGE_API_KEY}`;
+	const tdUrl = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1day&outputsize=100&apikey=${env.TWELVE_DATA_API_KEY}`;
 
 	try {
-		const response = await fetch(avUrl);
+		const response = await fetch(tdUrl);
 		const data = await response.json();
-		const series = data["Time Series (Daily)"];
-
-		if (!series) {
+		
+		if (data.status !== "ok" || !data.values) {
 			if (returnResponse) {
-				return jsonError(data["Note"] || data["Information"] || "No data returned from Alpha Vantage", 502);
+				return jsonError(data.message || "No data returned from Twelve Data", 502);
 			}
-			return
+			return;
 		}
 
-		const parsed = Object.entries(series).map(([date, values]) => ({
-			date,
-			open: parseFloat(values["1. open"]),
-			high: parseFloat(values["2. high"]),
-			low: parseFloat(values["3. low"]),
-			close: parseFloat(values["4. close"]),
-			volume: parseInt(values["5. volume"], 10)
-		}))
+		const parsed = data.values.map((v) => ({
+		date: v.datetime,
+		open: parseFloat(v.open),
+		high: parseFloat(v.high),
+		low: parseFloat(v.low),
+		close: parseFloat(v.close),
+		volume: parseInt(v.volume, 10)
+		}));
 
 		parsed.reverse();
 
@@ -117,7 +123,7 @@ async function refreshChartCache(symbol, env, returnResponse = false) {
 		}
 	} catch (err) {
 		if (returnResponse) {
-			return jsonError("Alpha Vantage fetch failed", 502);
+			return jsonError("Twelve Data fetch failed", 502);
 		}
 	}
 }
