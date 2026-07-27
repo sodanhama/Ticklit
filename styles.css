@@ -5,3 +5,48 @@ body {
     color: #f2f4f3;
     font-family: 'Lexend', sans-serif;
 }
+
+#term-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.term-card {
+    background-color: #1c1b1a;
+    border: 1px solid #f2f4f3;
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.term-card:hover {
+    background-color: #2c2b2a;
+}
+
+.term-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #f2f4f3;
+}
+
+.term-label {
+    font-size: 0.95 rem;
+    color: #f2f4f3;
+    margin-top: 4px;
+}
+
+.term-explain {
+    font-size: 0.9rem;
+    color: #f2f4f3;
+    max-height: 0;
+    margin-top: 12px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.term-card.expanded .term-explain {
+    max-height: 200px;
+}
