@@ -36,6 +36,11 @@ const TERM_DEFINITIONS = {
     explain: "The total value of the entire company, according to the stock market: price per share × total shares that exist.",
     format: (v) => `$${(v / 1000).toFixed(1)}B`,
   },
+  roe: {
+    label: "ROE (Return on Equity)",
+    explain: "How efficiently Apple turns shareholder money into profit. Apple's ROE looks unusually high (100%+) because years of stock buybacks have shrunk its 'shareholder equity' — this isn't a red flag, it's a side effect of Apple's specific strategy. Most companies sit closer to 15-20%.",
+    format: (v) => `${v.toFixed(2)}%`,
+  },
 };
 
 async function initChart() {
@@ -45,23 +50,23 @@ async function initChart() {
         width: container.clientWidth,
         height: 400,
         layout: {
-            background: {color: '#0a0908'},
+            background: {color: '#222222'},
             textColor: '#c7c7c7',
         },
         grid: {
-            vertLines: {color: '#1e222d'},
-            horzLines: {color: '#1e222d'},
+            vertLines: {color: '#222222'},
+            horzLines: {color: '#222222'},
         },
         rightPriceScale: {
-            borderColor: '#2a2e39',
+            borderColor: '#A6B1E1',
         },
         timeScale: {
-            borderColor: '#2a2e39',
+            borderColor: '#A6B1E1',
         },
     })
 
     const lineSeries = chart.addSeries(LightweightCharts.LineSeries, {
-    color: '#26a69a',
+    color: '#424874',
     lineWidth: 2,
     });
 
@@ -98,10 +103,6 @@ async function initTermGrid() {
         <div class="term-label">${def.label}</div>
         <div class="term-explain">${def.explain}</div>
         `
-
-        card.addEventListener("click", () => {
-            card.classList.toggle("expanded");
-        })
 
         grid.appendChild(card);
     })
